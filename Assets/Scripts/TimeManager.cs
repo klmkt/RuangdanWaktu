@@ -3,52 +3,43 @@ using UnityEngine;
 public class TimeManager : MonoBehaviour
 {
     public const int hoursInDay = 24, minutesInHour = 60;
+    private const float MinutesInDay = hoursInDay * minutesInHour;
 
     [SerializeField] private float dayDuration = 30f;
-<<<<<<< Updated upstream
-=======
     [SerializeField] private bool autoAdvance = true;
-    [SerializeField, Range(0, 12)] private int startHour;
-    [SerializeField, Range(0, minutesInHour - 1)] private int startMinute;
->>>>>>> Stashed changes
 
     private float totalTime;
     private float currentTime;
 
-    private void Awake()
-    {
-        ApplyStartTime();
-    }
-
-    private void OnValidate()
-    {
-        ApplyStartTime();
-    }
-
     private void Update()
     {
-        if (dayDuration <= 0f)
+        if (!autoAdvance || dayDuration <= 0f)
         {
             return;
         }
 
-        totalTime += Time.deltaTime;
-        currentTime = totalTime % dayDuration;
+        AddSeconds(Time.deltaTime);
     }
 
-    private void ApplyStartTime()
+    public void SetAutoAdvance(bool enabled)
+    {
+        autoAdvance = enabled;
+    }
+
+    public void AddMinutes(float deltaMinutes)
     {
         if (dayDuration <= 0f)
         {
-            totalTime = 0f;
-            currentTime = 0f;
             return;
         }
 
-        float normalizedHour = startHour % 12;
-        float startMinutesInDay = normalizedHour * minutesInHour + startMinute;
-        float startSeconds = startMinutesInDay * dayDuration / MinutesInDay;
-        totalTime = Mathf.Repeat(startSeconds, dayDuration);
+        float deltaSeconds = deltaMinutes * dayDuration / MinutesInDay;
+        AddSeconds(deltaSeconds);
+    }
+
+    private void AddSeconds(float deltaSeconds)
+    {
+        totalTime = Mathf.Repeat(totalTime + deltaSeconds, dayDuration);
         currentTime = totalTime;
     }
 

@@ -16,7 +16,7 @@ public class PlayerMovementTimeBridge : MonoBehaviour
 
         if (timeManager == null)
         {
-            timeManager = FindFirstObjectByType<TimeManager>();
+            timeManager = FindObjectOfType<TimeManager>();
         }
     }
 
