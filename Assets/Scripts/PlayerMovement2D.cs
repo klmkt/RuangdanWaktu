@@ -3,59 +3,65 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerMovement2D : MonoBehaviour
 {
-    [Header("Movement")]
-    [SerializeField] private float speed = 6f;
-    [SerializeField] private float jumpPower = 10f;
-    [SerializeField] private float fallingForce = 2.5f;
-    [SerializeField] private float groundCheckDistance = 0.1f;
+    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float jumpPower = 5f;
 
-    private Rigidbody2D rb2d;
-    private float moveInput;
-    private bool jumpQueued;
-    private readonly RaycastHit2D[] groundHits = new RaycastHit2D[4];
-    private ContactFilter2D groundFilter;
+    private float horizontalInput;
+    private bool isFacingRight;
+    private bool isJumping;
+    private Rigidbody2D rb;
 
     private void Awake()
     {
-        rb2d = GetComponent<Rigidbody2D>();
-        groundFilter = new ContactFilter2D
+        rb = GetComponent<Rigidbody2D>();
+
+        if (rb == null)
         {
-            useLayerMask = false,
-            useTriggers = false
-        };
+            Debug.LogError("PlayerMovement2D requires a Rigidbody2D component.", this);
+            enabled = false;
+        }
     }
 
     private void Update()
     {
-        moveInput = Input.GetAxisRaw("Horizontal");
-
-        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.W))
+        if (rb == null)
         {
-            jumpQueued = true;
+            return;
+        }
+
+        horizontalInput = Input.GetAxis("Horizontal");
+        FlipSprite();
+
+        if (Input.GetButtonDown("Jump") && !isJumping)
+        {
+            rb.velocity = new Vector2(rb.velocity.x, jumpPower);
+            isJumping = true;
         }
     }
 
     private void FixedUpdate()
     {
-        Vector2 velocity = rb2d.velocity;
-        velocity.x = moveInput * speed;
-
-        if (jumpQueued && IsGrounded())
+        if (rb == null)
         {
-            velocity.y = jumpPower;
+            return;
         }
 
-        if (velocity.y < 0f)
-        {
-            velocity += Vector2.up * Physics2D.gravity.y * (fallingForce - 1f) * Time.fixedDeltaTime;
-        }
-
-        rb2d.velocity = velocity;
-        jumpQueued = false;
+        rb.velocity = new Vector2(horizontalInput * moveSpeed, rb.velocity.y);
     }
 
-    private bool IsGrounded()
+    private void FlipSprite()
     {
-        return rb2d.Cast(Vector2.down, groundFilter, groundHits, groundCheckDistance) > 0;
+        if ((isFacingRight && horizontalInput < 0f) || (!isFacingRight && horizontalInput > 0f))
+        {
+            isFacingRight = !isFacingRight;
+            Vector3 localScale = transform.localScale;
+            localScale.x *= -1f;
+            transform.localScale = localScale;
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        isJumping = false;
     }
 }

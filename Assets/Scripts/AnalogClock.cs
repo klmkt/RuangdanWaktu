@@ -4,6 +4,7 @@ public class AnalogClock : MonoBehaviour
 {
     [SerializeField] private TimeManager timeManager;
     [SerializeField] private bool autoFromTime;
+    [SerializeField] private float twelveOClockAngle = 90f;
     [SerializeField] private Transform clockCenter;
     [SerializeField] private Transform minuteHand;
     [SerializeField] private Transform hourHand;
@@ -28,9 +29,11 @@ public class AnalogClock : MonoBehaviour
 
     private void Awake()
     {
+        ResolveClockCenter();
+
         if (timeManager == null)
         {
-            timeManager = FindObjectOfType<TimeManager>();
+            timeManager = FindFirstObjectByType<TimeManager>();
         }
 
         CacheBodies();
@@ -40,8 +43,25 @@ public class AnalogClock : MonoBehaviour
 
     private void OnValidate()
     {
+        ResolveClockCenter();
         CacheBodies();
         CacheOffsets();
+    }
+
+    private void ResolveClockCenter()
+    {
+        Transform namedCenter = transform.Find("ClockCenter");
+
+        if (clockCenter == null)
+        {
+            clockCenter = namedCenter != null ? namedCenter : transform;
+            return;
+        }
+
+        if (clockCenter == transform && namedCenter != null)
+        {
+            clockCenter = namedCenter;
+        }
     }
 
     private void Update()
@@ -55,8 +75,8 @@ public class AnalogClock : MonoBehaviour
 
         if (autoFromTime && activeHand == HandSelection.None && timeManager != null)
         {
-            hourAngle = -timeManager.GetHour() * HoursToDegrees;
-            minuteAngle = -timeManager.GetMinutes() * MinutesToDegrees;
+            hourAngle = twelveOClockAngle - timeManager.GetHour() * HoursToDegrees;
+            minuteAngle = twelveOClockAngle - timeManager.GetMinutes() * MinutesToDegrees;
         }
     }
 

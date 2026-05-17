@@ -5,9 +5,25 @@ public class TimeManager : MonoBehaviour
     public const int hoursInDay = 24, minutesInHour = 60;
 
     [SerializeField] private float dayDuration = 30f;
+<<<<<<< Updated upstream
+=======
+    [SerializeField] private bool autoAdvance = true;
+    [SerializeField, Range(0, 12)] private int startHour;
+    [SerializeField, Range(0, minutesInHour - 1)] private int startMinute;
+>>>>>>> Stashed changes
 
     private float totalTime;
     private float currentTime;
+
+    private void Awake()
+    {
+        ApplyStartTime();
+    }
+
+    private void OnValidate()
+    {
+        ApplyStartTime();
+    }
 
     private void Update()
     {
@@ -18,6 +34,22 @@ public class TimeManager : MonoBehaviour
 
         totalTime += Time.deltaTime;
         currentTime = totalTime % dayDuration;
+    }
+
+    private void ApplyStartTime()
+    {
+        if (dayDuration <= 0f)
+        {
+            totalTime = 0f;
+            currentTime = 0f;
+            return;
+        }
+
+        float normalizedHour = startHour % 12;
+        float startMinutesInDay = normalizedHour * minutesInHour + startMinute;
+        float startSeconds = startMinutesInDay * dayDuration / MinutesInDay;
+        totalTime = Mathf.Repeat(startSeconds, dayDuration);
+        currentTime = totalTime;
     }
 
     public float GetHour()
