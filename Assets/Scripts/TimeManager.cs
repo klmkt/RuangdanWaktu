@@ -3,7 +3,7 @@ using UnityEngine;
 public class TimeManager : MonoBehaviour
 {
     public const int hoursInDay = 24, minutesInHour = 60;
-    private const float MinutesInDay = hoursInDay * minutesInHour;
+    private const float minutesInDay = hoursInDay * minutesInHour;
 
     [SerializeField] private float dayDuration = 30f;
     [SerializeField] private bool autoAdvance = true;
@@ -33,7 +33,7 @@ public class TimeManager : MonoBehaviour
             return;
         }
 
-        float deltaSeconds = deltaMinutes * dayDuration / MinutesInDay;
+        float deltaSeconds = deltaMinutes * dayDuration / minutesInDay;
         AddSeconds(deltaSeconds);
     }
 
