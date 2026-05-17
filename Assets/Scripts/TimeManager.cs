@@ -3,21 +3,44 @@ using UnityEngine;
 public class TimeManager : MonoBehaviour
 {
     public const int hoursInDay = 24, minutesInHour = 60;
+    private const float MinutesInDay = hoursInDay * minutesInHour;
 
     [SerializeField] private float dayDuration = 30f;
+    [SerializeField] private bool autoAdvance = true;
 
     private float totalTime;
     private float currentTime;
 
     private void Update()
     {
+        if (!autoAdvance || dayDuration <= 0f)
+        {
+            return;
+        }
+
+        AddSeconds(Time.deltaTime);
+    }
+
+    public void SetAutoAdvance(bool enabled)
+    {
+        autoAdvance = enabled;
+    }
+
+    public void AddMinutes(float deltaMinutes)
+    {
         if (dayDuration <= 0f)
         {
             return;
         }
 
-        totalTime += Time.deltaTime;
-        currentTime = totalTime % dayDuration;
+        float deltaSeconds = deltaMinutes * dayDuration / MinutesInDay;
+        AddSeconds(deltaSeconds);
+    }
+
+    private void AddSeconds(float deltaSeconds)
+    {
+        totalTime = Mathf.Repeat(totalTime + deltaSeconds, dayDuration);
+        currentTime = totalTime;
     }
 
     public float GetHour()
