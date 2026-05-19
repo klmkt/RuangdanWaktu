@@ -5,8 +5,8 @@ using UnityEngine.SceneManagement;
 
 public class MainMenuManager : MonoBehaviour
 {
-    // Hanya butuh  ingsUI untuk saat ini sesuai Hierarchy-mu
-    [SerializeField] private SettingsUIManage   r _settingsUI;
+    // Hanya butuh SettingsUI untuk saat ini sesuai Hierarchy-mu
+    [SerializeField] private SettingsUIManager _settingsUI;
 
     // Pasangkan fungsi ini ke event OnClick tombol 'Start'
     public void ChangeScene(string sceneName)
