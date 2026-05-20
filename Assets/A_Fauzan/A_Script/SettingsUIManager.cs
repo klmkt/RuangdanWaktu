@@ -18,6 +18,10 @@ public class SettingsUIManager : MonoBehaviour
     [SerializeField] private Button _graphicBtn; // Belum ada fungsi
     [SerializeField] private Button _languageBtn; // Belum ada fungsi
 
+    // --- TAMBAHAN KODE BARU DI SINI ---
+    [SerializeField] private Button _closeBtn; // Tombol untuk menutup Settings
+    // ----------------------------------
+
     [Header("Animation Settings")]
     [SerializeField] private float _popDuration = 0.5f;
 
@@ -86,6 +90,7 @@ public class SettingsUIManager : MonoBehaviour
         });
     }
 
+    // Fungsi ini sudah BENAR dan bisa digunakan untuk Close Button
     public void CloseAll()
     {
         // Cari panel mana yang aktif dan kecilkan
