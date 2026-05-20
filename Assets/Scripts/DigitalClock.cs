@@ -14,7 +14,7 @@ public class DigitalClock : MonoBehaviour
 
         if (timeManager == null)
         {
-            timeManager = FindObjectOfType<TimeManager>();
+            timeManager = FindFirstObjectByType<TimeManager>();
         }
     }
 

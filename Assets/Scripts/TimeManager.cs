@@ -3,21 +3,60 @@ using UnityEngine;
 public class TimeManager : MonoBehaviour
 {
     public const int hoursInDay = 24, minutesInHour = 60;
+    private const float minutesInDay = hoursInDay * minutesInHour;
 
     [SerializeField] private float dayDuration = 30f;
+    [Tooltip("When enabled, time advances automatically each frame. When disabled, time only changes via AddMinutes.")]
+    [SerializeField, HideInInspector] private bool autoAdvance = true;
 
     private float totalTime;
     private float currentTime;
 
     private void Update()
     {
+        if (!autoAdvance || dayDuration <= 0f)
+        {
+            return;
+        }
+
+        AddSeconds(Time.deltaTime);
+    }
+
+    public void SetAutoAdvance(bool enabled)
+    {
+        autoAdvance = enabled;
+    }
+
+    public void SetTime(int hour, int minute)
+    {
         if (dayDuration <= 0f)
         {
             return;
         }
 
-        totalTime += Time.deltaTime;
-        currentTime = totalTime % dayDuration;
+        int clampedHour = Mathf.Clamp(hour, 0, hoursInDay - 1);
+        int clampedMinute = Mathf.Clamp(minute, 0, minutesInHour - 1);
+        float totalMinutes = clampedHour * minutesInHour + clampedMinute;
+
+        totalTime = totalMinutes * dayDuration / minutesInDay;
+        currentTime = totalTime;
+    }
+
+    public void AddMinutes(float deltaMinutes)
+    {
+        if (dayDuration <= 0f)
+        {
+            return;
+        }
+
+        float deltaSeconds = deltaMinutes * dayDuration / minutesInDay;
+        AddSeconds(deltaSeconds);
+    }
+
+    private void AddSeconds(float deltaSeconds)
+    {
+        totalTime = Mathf.Repeat(totalTime + deltaSeconds, dayDuration);
+        currentTime = totalTime;
     }
 
     public float GetHour()
