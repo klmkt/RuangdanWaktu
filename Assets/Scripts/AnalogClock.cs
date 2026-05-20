@@ -2,15 +2,40 @@ using UnityEngine;
 
 public class AnalogClock : MonoBehaviour
 {
+    [Header("Time Source")]
     [SerializeField] private TimeManager timeManager;
+    [Tooltip("When enabled, the hands follow TimeManager. If no TimeManager is assigned, the clock uses its local time.")]
     [SerializeField] private bool autoFromTime;
-    [SerializeField] private float twelveOClockAngle = 90f;
+    
+    [Header("Starting Time")]
+    [Tooltip("Initial time for manual mode and for seeding TimeManager when Auto From Time is enabled.")]
+    [SerializeField, Range(1, 12)] private int startingHour = 12;
+    [SerializeField, Range(0, 59)] private int startingMinute = 0;
+    [Tooltip("When enabled, applies the starting time to TimeManager on Awake.")]
+    [SerializeField] private bool applyStartTimeToTimeManager = true;
+    
+    [Header("Playback Speed (when Auto Advance is ON)")]
+    [SerializeField] private float dayDuration = 30f;
+    [SerializeField] private float playbackSpeed = 1f;
+
+    [Header("Player Proximity Freeze")]
+    [Tooltip("When enabled, the hands stop updating while the player is inside the clock sprite bounds.")]
+    [SerializeField] private bool freezeWhenPlayerInside;
+    [Tooltip("Optional. If left empty, uses the SpriteRenderer on this GameObject.")]
+    [SerializeField] private SpriteRenderer clockSprite;
+    [Tooltip("Optional. If left empty, uses the GameObject tagged Player.")]
+    [SerializeField] private Transform player;
+    
+    [Header("References")]
     [SerializeField] private Transform clockCenter;
     [SerializeField] private Transform minuteHand;
     [SerializeField] private Transform hourHand;
 
-    private const float HoursToDegrees = 360f / 12f;
-    private const float MinutesToDegrees = 360f / 60f;
+    private const float HoursToDegrees = 360f / 12f;     // 30° per hour
+    private const float MinutesToDegrees = 360f / 60f;   // 6° per minute
+    private const float TwelveOClockAngle = 90f;         // 90° = upward in Unity 2D
+    private const float MinutesInDay = 24f * 60f;
+    
     private Vector3 minuteHandOffset;
     private Vector3 hourHandOffset;
     private bool offsetsCached;
@@ -19,6 +44,9 @@ public class AnalogClock : MonoBehaviour
     private float hourAngle;
     private float minuteAngle;
     private HandSelection activeHand;
+    
+    // Independent time tracking
+    private float independentTotalTime;
 
     private enum HandSelection
     {
@@ -36,9 +64,29 @@ public class AnalogClock : MonoBehaviour
             timeManager = FindFirstObjectByType<TimeManager>();
         }
 
+        ResolvePlayer();
+        ResolveClockSprite();
         CacheBodies();
         CacheOffsets();
-        SyncAnglesFromHands();
+        InitializeTime();
+    }
+
+    private void InitializeTime()
+    {
+        if (autoFromTime && timeManager != null)
+        {
+            if (applyStartTimeToTimeManager)
+            {
+                timeManager.SetTime(startingHour, startingMinute);
+            }
+
+            // Will sync with TimeManager in Update
+            return;
+        }
+
+        // Initialize independent time tracking
+        float totalMinutes = Mathf.Clamp(startingHour, 0, 23) * 60f + Mathf.Clamp(startingMinute, 0, 59);
+        independentTotalTime = totalMinutes * dayDuration / MinutesInDay;
     }
 
     private void OnValidate()
@@ -46,6 +94,7 @@ public class AnalogClock : MonoBehaviour
         ResolveClockCenter();
         CacheBodies();
         CacheOffsets();
+        ResolveClockSprite();
     }
 
     private void ResolveClockCenter()
@@ -73,11 +122,26 @@ public class AnalogClock : MonoBehaviour
 
         HandleMouseInput();
 
-        if (autoFromTime && activeHand == HandSelection.None && timeManager != null)
+        if (activeHand != HandSelection.None)
         {
-            hourAngle = twelveOClockAngle - timeManager.GetHour() * HoursToDegrees;
-            minuteAngle = twelveOClockAngle - timeManager.GetMinutes() * MinutesToDegrees;
+            // User is dragging, don't update time
+            return;
         }
+
+        if (ShouldFreezeClock())
+        {
+            return;
+        }
+
+        if (TryGetTimeFromManager(out float hourValue, out float minuteValue))
+        {
+            UpdateAngles(hourValue, minuteValue);
+            return;
+        }
+
+        AdvanceIndependentTimeIfNeeded();
+        GetIndependentTime(out hourValue, out minuteValue);
+        UpdateAngles(hourValue, minuteValue);
     }
 
     private void FixedUpdate()
@@ -122,17 +186,93 @@ public class AnalogClock : MonoBehaviour
         minuteHandBody = minuteHand != null ? minuteHand.GetComponent<Rigidbody2D>() : null;
     }
 
-    private void SyncAnglesFromHands()
+    private void ResolveClockSprite()
     {
-        if (hourHand != null)
+        if (clockSprite != null)
         {
-            hourAngle = Mathf.DeltaAngle(0f, hourHand.eulerAngles.z);
+            return;
         }
 
-        if (minuteHand != null)
+        clockSprite = GetComponent<SpriteRenderer>();
+    }
+
+    private void ResolvePlayer()
+    {
+        if (player != null)
         {
-            minuteAngle = Mathf.DeltaAngle(0f, minuteHand.eulerAngles.z);
+            return;
         }
+
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        player = playerObject != null ? playerObject.transform : null;
+    }
+
+    private bool ShouldFreezeClock()
+    {
+        if (!freezeWhenPlayerInside || player == null)
+        {
+            return false;
+        }
+
+        Vector3 centerPosition = clockCenter != null ? clockCenter.position : transform.position;
+        float radius = 0f;
+
+        if (clockSprite != null)
+        {
+            Bounds bounds = clockSprite.bounds;
+            centerPosition = bounds.center;
+            radius = Mathf.Max(bounds.extents.x, bounds.extents.y);
+        }
+
+        if (radius <= 0f)
+        {
+            return false;
+        }
+
+        Vector2 delta = (Vector2)(player.position - centerPosition);
+        return delta.sqrMagnitude <= radius * radius;
+    }
+
+    private bool TryGetTimeFromManager(out float hourValue, out float minuteValue)
+    {
+        if (!autoFromTime || timeManager == null)
+        {
+            hourValue = 0f;
+            minuteValue = 0f;
+            return false;
+        }
+
+        hourValue = timeManager.GetHour() % 12f;
+        minuteValue = timeManager.GetMinutes();
+        return true;
+    }
+
+    private void AdvanceIndependentTimeIfNeeded()
+    {
+        if (!autoFromTime)
+        {
+            return;
+        }
+
+        // Use independent time tracking when no TimeManager is assigned.
+        independentTotalTime += Time.deltaTime * playbackSpeed;
+
+        if (independentTotalTime >= dayDuration)
+        {
+            independentTotalTime = Mathf.Repeat(independentTotalTime, dayDuration);
+        }
+    }
+
+    private void GetIndependentTime(out float hourValue, out float minuteValue)
+    {
+        hourValue = (independentTotalTime * 24f / dayDuration) % 12f;
+        minuteValue = (independentTotalTime * 24f * 60f / dayDuration) % 60f;
+    }
+
+    private void UpdateAngles(float hourValue, float minuteValue)
+    {
+        hourAngle = TwelveOClockAngle - (hourValue * HoursToDegrees);
+        minuteAngle = TwelveOClockAngle - (minuteValue * MinutesToDegrees);
     }
 
     private void HandleMouseInput()
