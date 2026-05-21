@@ -4,8 +4,6 @@ using UnityEngine.SceneManagement;
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerMovement2D : MonoBehaviour
 {
-    private const string DeathColliderName = "ColliderMati";
-
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float jumpPower = 5f;
 
@@ -63,25 +61,7 @@ public class PlayerMovement2D : MonoBehaviour
         }
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        isJumping = false;
-
-        if (collision.collider != null && collision.collider.gameObject.name == DeathColliderName)
-        {
-            RestartLevel();
-        }
-    }
-
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        if (other != null && other.gameObject.name == DeathColliderName)
-        {
-            RestartLevel();
-        }
-    }
-
-    private void RestartLevel()
+    public void RestartLevel()
     {
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);

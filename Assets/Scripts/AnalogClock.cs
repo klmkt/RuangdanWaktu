@@ -8,14 +8,14 @@ public class AnalogClock : MonoBehaviour
     [SerializeField] private bool autoFromTime;
     [Tooltip("When enabled, ignore TimeManager and always use local time for this clock.")]
     [SerializeField] private bool forceLocalTime;
-    
+
     [Header("Starting Time")]
     [Tooltip("Initial time for manual mode and for seeding TimeManager when Auto From Time is enabled.")]
     [SerializeField, Range(1, 12)] private int startingHour = 12;
     [SerializeField, Range(0, 59)] private int startingMinute = 0;
     [Tooltip("When enabled, applies the starting time to TimeManager on Awake.")]
     [SerializeField] private bool applyStartTimeToTimeManager = true;
-    
+
     [Header("Playback Speed (when Auto Advance is ON)")]
     [SerializeField] private float dayDuration = 30f;
     [SerializeField] private float playbackSpeed = 1f;
@@ -27,7 +27,12 @@ public class AnalogClock : MonoBehaviour
     [SerializeField] private SpriteRenderer clockSprite;
     [Tooltip("Optional. If left empty, uses the GameObject tagged Player.")]
     [SerializeField] private Transform player;
-    
+
+    [Header("Player Proximity Fade")]
+    [SerializeField, Range(0f, 1f)] private float insideOpacity = 0.2f;
+    [SerializeField, Range(0f, 1f)] private float outsideOpacity = 0.5f;
+    [SerializeField] private float opacityFadeSpeed = 2f;
+
     [Header("References")]
     [SerializeField] private Transform clockCenter;
     [SerializeField] private Transform minuteHand;
@@ -37,7 +42,7 @@ public class AnalogClock : MonoBehaviour
     private const float MinutesToDegrees = 360f / 60f;   // 6° per minute
     private const float TwelveOClockAngle = 90f;         // 90° = upward in Unity 2D
     private const float MinutesInDay = 24f * 60f;
-    
+
     private Vector3 minuteHandOffset;
     private Vector3 hourHandOffset;
     private bool offsetsCached;
@@ -50,7 +55,7 @@ public class AnalogClock : MonoBehaviour
     private float timeOffsetMinutes;
     private float frozenTotalMinutes;
 
-    
+
     // Independent time tracking
     private float independentTotalTime;
 
@@ -121,6 +126,8 @@ public class AnalogClock : MonoBehaviour
 
     private void Update()
     {
+        UpdateClockOpacity(IsPlayerInsideClock());
+
         if (hourHand == null || minuteHand == null)
         {
             return;
@@ -222,7 +229,17 @@ public class AnalogClock : MonoBehaviour
 
     private bool ShouldFreezeClock()
     {
-        if (!freezeWhenPlayerInside || player == null)
+        if (!freezeWhenPlayerInside)
+        {
+            return false;
+        }
+
+        return IsPlayerInsideClock();
+    }
+
+    private bool IsPlayerInsideClock()
+    {
+        if (player == null)
         {
             return false;
         }
@@ -244,6 +261,24 @@ public class AnalogClock : MonoBehaviour
 
         Vector2 delta = (Vector2)(player.position - centerPosition);
         return delta.sqrMagnitude <= radius * radius;
+    }
+
+    private void UpdateClockOpacity(bool playerInside)
+    {
+        if (clockSprite == null)
+        {
+            return;
+        }
+
+        float targetAlpha = playerInside ? insideOpacity : outsideOpacity;
+        Color color = clockSprite.color;
+        float newAlpha = Mathf.MoveTowards(color.a, targetAlpha, opacityFadeSpeed * Time.deltaTime);
+
+        if (!Mathf.Approximately(color.a, newAlpha))
+        {
+            color.a = newAlpha;
+            clockSprite.color = color;
+        }
     }
 
     private bool TryGetTimeFromManager(out float hourValue, out float minuteValue)
@@ -291,8 +326,13 @@ public class AnalogClock : MonoBehaviour
 
     private float GetManagerTotalMinutes()
     {
-        return (timeManager != null ? timeManager.GetHour() : 0f) * 60f
-            + (timeManager != null ? timeManager.GetMinutes() : 0f);
+        if (timeManager == null)
+        {
+            return 0f;
+        }
+
+        // GetHour() already includes fractional minutes, so multiply once to avoid double counting.
+        return timeManager.GetHour() * 60f;
     }
 
     private float GetAdjustedTotalMinutes()

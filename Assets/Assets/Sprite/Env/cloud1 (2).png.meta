@@ -1,13 +1,10 @@
 fileFormatVersion: 2
-guid: 33732892bd407e349b130be20d5c68b1
+guid: 792bbd9082f85f14abdbaefa3a6a49a5
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5457230233444185960
-    second: cloud1_0
-  - first:
-      213: 5831926105675029623
-    second: cloud1_1
+      213: -1489888531759498304
+    second: cloud1 (2)_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -103,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: cloud1_0
+      name: cloud1 (2)_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
-        width: 1383
-        height: 689
+        y: 351
+        width: 3025
+        height: 998
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -117,29 +114,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 898890e24060444b0800000000000000
-      internalID: -5457230233444185960
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: cloud1_1
-      rect:
-        serializedVersion: 2
-        x: 1789
-        y: 0
-        width: 1328
-        height: 779
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 77c561de4e92fe050800000000000000
-      internalID: 5831926105675029623
+      spriteID: 0cbfb8d264ad25be0800000000000000
+      internalID: -1489888531759498304
       vertices: []
       indices: 
       edges: []
