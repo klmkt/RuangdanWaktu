@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -6,13 +7,28 @@ public class PlayerMovement2D : MonoBehaviour
 {
     private const string DeathColliderName = "ColliderMati";
 
+    private const float GroundNormalThreshold = 0.5f;
+
+    [Header("Movement")]
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float jumpPower = 5f;
+
+    [Header("Audio")]
+    [SerializeField] private AudioManager audioManager;
+    [SerializeField] private string footstepSoundName = "footstep";
+    [SerializeField] private string landingSoundName = "fall";
+    [SerializeField] private float footstepInterval = 0.45f;
+    [SerializeField] private float footstepSpeedThreshold = 0.1f;
+    [SerializeField] private float landingMinVelocity = 1f;
 
     private float horizontalInput;
     private bool isFacingRight;
     private bool isJumping;
     private Rigidbody2D rb;
+    private float footstepTimer;
+    private float lastVerticalVelocity;
+    private bool isGrounded;
+    private HashSet<Collider2D> groundedColliders = new HashSet<Collider2D>();
 
     private void Awake()
     {
@@ -22,6 +38,27 @@ public class PlayerMovement2D : MonoBehaviour
         {
             Debug.LogError("PlayerMovement2D requires a Rigidbody2D component.", this);
             enabled = false;
+        }
+
+        if (audioManager == null)
+        {
+            audioManager = AudioManager.instance;
+            if (audioManager == null)
+            {
+                audioManager = FindFirstObjectByType<AudioManager>();
+            }
+        }
+    }
+
+    private void Start()
+    {
+        if (audioManager == null)
+        {
+            audioManager = AudioManager.instance;
+            if (audioManager == null)
+            {
+                audioManager = FindFirstObjectByType<AudioManager>();
+            }
         }
     }
 
@@ -35,7 +72,7 @@ public class PlayerMovement2D : MonoBehaviour
         horizontalInput = Input.GetAxis("Horizontal");
         FlipSprite();
 
-        if (Input.GetButtonDown("Jump") && !isJumping)
+        if ((Input.GetButtonDown("Jump") || Input.GetKeyDown(KeyCode.W)) && !isJumping)
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpPower);
             isJumping = true;
@@ -49,7 +86,9 @@ public class PlayerMovement2D : MonoBehaviour
             return;
         }
 
+        lastVerticalVelocity = rb.velocity.y;
         rb.velocity = new Vector2(horizontalInput * moveSpeed, rb.velocity.y);
+        HandleFootsteps();
     }
 
     private void FlipSprite()
@@ -65,11 +104,43 @@ public class PlayerMovement2D : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        isJumping = false;
-
         if (collision.collider != null && collision.collider.gameObject.name == DeathColliderName)
         {
             RestartLevel();
+            return;
+        }
+
+        if (TryAddGroundContact(collision))
+        {
+            UpdateGroundedState();
+        }
+
+        isJumping = false;
+    }
+
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if (collision.collider == null)
+        {
+            return;
+        }
+
+        if (TryAddGroundContact(collision))
+        {
+            UpdateGroundedState();
+        }
+    }
+
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.collider == null)
+        {
+            return;
+        }
+
+        if (groundedColliders.Remove(collision.collider))
+        {
+            UpdateGroundedState();
         }
     }
 
@@ -85,5 +156,84 @@ public class PlayerMovement2D : MonoBehaviour
     {
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    private bool TryAddGroundContact(Collision2D collision)
+    {
+        if (!IsGroundCollision(collision))
+        {
+            return false;
+        }
+
+        groundedColliders.Add(collision.collider);
+        return true;
+    }
+
+    private bool IsGroundCollision(Collision2D collision)
+    {
+        if (collision == null)
+        {
+            return false;
+        }
+
+        foreach (ContactPoint2D contact in collision.contacts)
+        {
+            if (contact.normal.y >= GroundNormalThreshold)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void UpdateGroundedState()
+    {
+        bool wasGrounded = isGrounded;
+        isGrounded = groundedColliders.Count > 0;
+
+        if (!wasGrounded && isGrounded)
+        {
+            TryPlayLanding();
+        }
+    }
+
+    private void HandleFootsteps()
+    {
+        if (!isGrounded || Mathf.Abs(horizontalInput) < 0.01f || Mathf.Abs(rb.velocity.x) < footstepSpeedThreshold)
+        {
+            footstepTimer = 0f;
+            return;
+        }
+
+        footstepTimer += Time.fixedDeltaTime;
+        if (footstepTimer >= footstepInterval)
+        {
+            TryPlayFootstep();
+            footstepTimer = 0f;
+        }
+    }
+
+    private void TryPlayFootstep()
+    {
+        if (audioManager == null || string.IsNullOrWhiteSpace(footstepSoundName))
+        {
+            return;
+        }
+
+        audioManager.PlaySFX(footstepSoundName);
+    }
+
+    private void TryPlayLanding()
+    {
+        if (audioManager == null || string.IsNullOrWhiteSpace(landingSoundName))
+        {
+            return;
+        }
+
+        if (lastVerticalVelocity <= -landingMinVelocity)
+        {
+            audioManager.PlaySFX(landingSoundName);
+        }
     }
 }
