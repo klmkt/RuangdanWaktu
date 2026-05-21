@@ -9,21 +9,6 @@ EditorBuildSettings:
     path: Assets/A_Fauzan/A_Scenes/A_MainMenu.unity
     guid: 6c20f8488b985494cab6a7c3d21cbb58
   - enabled: 1
-    path: Assets/Scenes/Testing.unity
-    guid: 8c9cfa26abfee488c85f1582747f6a02
-  - enabled: 1
-    path: Assets/A_Fauzan/A_Scenes/A_PauseMenu.unity
-    guid: a4906eb9d8755e349b1819fd84e95917
-  - enabled: 1
-    path: Assets/Scenes/Level 1.unity
-    guid: 98ecd7c766fb3d14fb974006ff0d08d1
-  - enabled: 1
-    path: Assets/Scenes/Level 2.unity
-    guid: 081c8dced01c2f84d9e8731954786375
-  - enabled: 1
-    path: Assets/Scenes/Level 3.unity
-    guid: ecc245919b1b3da4a8210c3820164d1f
-  - enabled: 1
     path: Assets/Scenes/Shabri/Level1.unity
     guid: 3e24d2ea011dd7b40a56b6c04c367b12
   - enabled: 1
