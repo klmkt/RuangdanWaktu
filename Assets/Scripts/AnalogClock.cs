@@ -6,6 +6,8 @@ public class AnalogClock : MonoBehaviour
     [SerializeField] private TimeManager timeManager;
     [Tooltip("When enabled, the hands follow TimeManager. If no TimeManager is assigned, the clock uses its local time.")]
     [SerializeField] private bool autoFromTime;
+    [Tooltip("When enabled, ignore TimeManager and always use local time for this clock.")]
+    [SerializeField] private bool forceLocalTime;
     
     [Header("Starting Time")]
     [Tooltip("Initial time for manual mode and for seeding TimeManager when Auto From Time is enabled.")]
@@ -44,6 +46,10 @@ public class AnalogClock : MonoBehaviour
     private float hourAngle;
     private float minuteAngle;
     private HandSelection activeHand;
+    private bool isFrozen;
+    private float timeOffsetMinutes;
+    private float frozenTotalMinutes;
+
     
     // Independent time tracking
     private float independentTotalTime;
@@ -59,7 +65,7 @@ public class AnalogClock : MonoBehaviour
     {
         ResolveClockCenter();
 
-        if (timeManager == null)
+        if (timeManager == null && !forceLocalTime)
         {
             timeManager = FindFirstObjectByType<TimeManager>();
         }
@@ -73,7 +79,7 @@ public class AnalogClock : MonoBehaviour
 
     private void InitializeTime()
     {
-        if (autoFromTime && timeManager != null)
+        if (autoFromTime && timeManager != null && !forceLocalTime)
         {
             if (applyStartTimeToTimeManager)
             {
@@ -128,9 +134,16 @@ public class AnalogClock : MonoBehaviour
             return;
         }
 
-        if (ShouldFreezeClock())
+        bool shouldFreeze = ShouldFreezeClock();
+
+        if (shouldFreeze)
         {
+            BeginFreezeIfNeeded();
             return;
+        }
+        else if (isFrozen)
+        {
+            EndFreeze();
         }
 
         if (TryGetTimeFromManager(out float hourValue, out float minuteValue))
@@ -235,15 +248,16 @@ public class AnalogClock : MonoBehaviour
 
     private bool TryGetTimeFromManager(out float hourValue, out float minuteValue)
     {
-        if (!autoFromTime || timeManager == null)
+        if (!autoFromTime || forceLocalTime || timeManager == null)
         {
             hourValue = 0f;
             minuteValue = 0f;
             return false;
         }
 
-        hourValue = timeManager.GetHour() % 12f;
-        minuteValue = timeManager.GetMinutes();
+        float adjustedMinutes = GetAdjustedTotalMinutes();
+        hourValue = (adjustedMinutes / 60f) % 12f;
+        minuteValue = adjustedMinutes % 60f;
         return true;
     }
 
@@ -273,6 +287,44 @@ public class AnalogClock : MonoBehaviour
     {
         hourAngle = TwelveOClockAngle - (hourValue * HoursToDegrees);
         minuteAngle = TwelveOClockAngle - (minuteValue * MinutesToDegrees);
+    }
+
+    private float GetManagerTotalMinutes()
+    {
+        return (timeManager != null ? timeManager.GetHour() : 0f) * 60f
+            + (timeManager != null ? timeManager.GetMinutes() : 0f);
+    }
+
+    private float GetAdjustedTotalMinutes()
+    {
+        float managerMinutes = GetManagerTotalMinutes();
+        return Mathf.Repeat(managerMinutes + timeOffsetMinutes, MinutesInDay);
+    }
+
+    private void BeginFreezeIfNeeded()
+    {
+        if (isFrozen)
+        {
+            return;
+        }
+
+        if (autoFromTime && timeManager != null && !forceLocalTime)
+        {
+            frozenTotalMinutes = GetAdjustedTotalMinutes();
+        }
+
+        isFrozen = true;
+    }
+
+    private void EndFreeze()
+    {
+        if (autoFromTime && timeManager != null && !forceLocalTime)
+        {
+            float managerMinutes = GetManagerTotalMinutes();
+            timeOffsetMinutes = frozenTotalMinutes - managerMinutes;
+        }
+
+        isFrozen = false;
     }
 
     private void HandleMouseInput()
