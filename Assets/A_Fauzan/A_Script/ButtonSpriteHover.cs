@@ -1,29 +1,29 @@
 using UnityEngine;
-using UnityEngine.EventSystems; // Untuk mendeteksi kursor
-using UnityEngine.UI; // Wajib ditambahkan untuk mengakses komponen Image
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
+// [RequireComponent] memastikan script ini HANYA bisa dipasang di objek yang punya komponen Image
+[RequireComponent(typeof(Image))]
 public class ButtonSpriteHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
-    [SerializeField] private Image _buttonImage;
+    private Image _buttonImage;
+    private Sprite _normalSprite; // Sekarang private, tidak perlu diisi di Inspector
 
-    [Header("Sprite Settings")]
-    [SerializeField] private Sprite _normalSprite;
-    [SerializeField] private Sprite _hoverSprite;
+    [Header("Hover Settings")]
+    [SerializeField] private Sprite _hoverSprite; // Kamu HANYA perlu mengisi ini di Inspector
 
-    private void Start()
+    private void Awake()
     {
-        // Pastikan sprite kembali ke normal saat game dimulai
-        if (_buttonImage != null && _normalSprite != null)
+        // Secara otomatis mengambil komponen Image yang ada di GameObject tombol ini
+        _buttonImage = GetComponent<Image>();
+
+        // Membaca 'Source Image' yang sudah terpasang dan menyimpannya sebagai Normal Sprite
+        if (_buttonImage != null)
         {
-            _buttonImage.sprite = _normalSprite;
-        }
-        else
-        {
-            Debug.LogWarning("Komponen Image atau Normal Sprite belum dimasukkan di: " + gameObject.name);
+            _normalSprite = _buttonImage.sprite;
         }
     }
 
-    // Terpanggil saat kursor masuk area button
     public void OnPointerEnter(PointerEventData eventData)
     {
         if (_buttonImage != null && _hoverSprite != null)
@@ -32,11 +32,11 @@ public class ButtonSpriteHover : MonoBehaviour, IPointerEnterHandler, IPointerEx
         }
     }
 
-    // Terpanggil saat kursor keluar area button
     public void OnPointerExit(PointerEventData eventData)
     {
         if (_buttonImage != null && _normalSprite != null)
         {
+            // Mengembalikan ke Source Image aslinya
             _buttonImage.sprite = _normalSprite;
         }
     }
