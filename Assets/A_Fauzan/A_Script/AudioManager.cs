@@ -17,6 +17,10 @@ public class AudioManager : MonoBehaviour
     [Tooltip("Komponen AudioSource khusus untuk Dialog")]
     public AudioSource dialogSource;
 
+    [Header("Startup")]
+    [SerializeField] private bool playMusicOnStart = true;
+    [SerializeField] private string startMusicName;
+    [SerializeField] private bool loopMusic = true;
 
     //Struktur data kustom untuk menyimpan nama file audio
 
@@ -42,11 +46,16 @@ public class AudioManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        EnsureAudioSources();
     }
     // Start is called before the first frame update
     void Start()
     {
-
+        if (playMusicOnStart && !string.IsNullOrWhiteSpace(startMusicName))
+        {
+            PlayMusic(startMusicName);
+        }
     }
 
     // Update is called once per frame
@@ -57,6 +66,12 @@ public class AudioManager : MonoBehaviour
 
     public void PlayMusic(string soundName)
     {
+        if (musicSource == null)
+        {
+            Debug.LogError("Music source belum di-assign.", this);
+            return;
+        }
+
         Sound s = Array.Find(musicSounds, x => x.name == soundName);
 
         if (s.clip == null)
@@ -64,17 +79,24 @@ public class AudioManager : MonoBehaviour
             Debug.LogWarning("Musik: " + soundName + " Tidak ditemukan");
             return;
         }
+        musicSource.loop = loopMusic;
         musicSource.clip = s.clip;
         musicSource.Play();
     }
 
     public void PlaySFX(string soundName)
     {
+        if (sfxSource == null)
+        {
+            Debug.LogError("SFX source belum di-assign.", this);
+            return;
+        }
+
         Sound s = Array.Find(sfxSounds, x => x.name == soundName);
 
         if (s.clip == null)
         {
-            Debug.LogWarning("Musik: " + soundName + " Tidak ditemukan");
+            Debug.LogWarning("SFX: " + soundName + " Tidak ditemukan");
             return;
         }
 
@@ -84,6 +106,12 @@ public class AudioManager : MonoBehaviour
     // Fungsi untuk memutar dialog (akan memotong dialog sebelumnya jika ada yang sedang bunyi)
     public void PlayDialog(string soundName)
     {
+        if (dialogSource == null)
+        {
+            Debug.LogError("Dialog source belum di-assign.", this);
+            return;
+        }
+
         Sound s = Array.Find(sfxSounds, x => x.name == soundName);
 
         if (s.clip == null)
@@ -108,16 +136,53 @@ public class AudioManager : MonoBehaviour
 
     public void StopMusic()
     {
+        if (musicSource == null)
+        {
+            Debug.LogError("Music source belum di-assign.", this);
+            return;
+        }
+
         musicSource.Stop();
     }
 
     public void ToggleMusic()
     {
+        if (musicSource == null)
+        {
+            Debug.LogError("Music source belum di-assign.", this);
+            return;
+        }
+
         musicSource.mute = !musicSource.mute;
     }
 
     public void ToggleSFX()
     {
+        if (sfxSource == null)
+        {
+            Debug.LogError("SFX source belum di-assign.", this);
+            return;
+        }
+
         sfxSource.mute = !sfxSource.mute;
+    }
+
+    private void EnsureAudioSources()
+    {
+        if (musicSource != null && sfxSource != null && dialogSource != null)
+        {
+            return;
+        }
+
+        AudioSource[] sources = GetComponents<AudioSource>();
+        int index = 0;
+
+        if (musicSource == null && sources.Length > index) musicSource = sources[index++];
+        if (sfxSource == null && sources.Length > index) sfxSource = sources[index++];
+        if (dialogSource == null && sources.Length > index) dialogSource = sources[index++];
+
+        if (musicSource == null) musicSource = gameObject.AddComponent<AudioSource>();
+        if (sfxSource == null) sfxSource = gameObject.AddComponent<AudioSource>();
+        if (dialogSource == null) dialogSource = gameObject.AddComponent<AudioSource>();
     }
 }
