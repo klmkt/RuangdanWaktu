@@ -439,6 +439,7 @@ GameObject:
   - component: {fileID: 293238418}
   - component: {fileID: 293238417}
   - component: {fileID: 293238416}
+  - component: {fileID: 293238419}
   m_Layer: 5
   m_Name: Start
   m_TagString: Untagged
@@ -560,6 +561,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 293238414}
   m_CullTransparentMesh: 1
+--- !u!114 &293238419
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 293238414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a950c771fb88824a8b33f72e0d795c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _buttonText: {fileID: 8462907}
+  _normalColor: {r: 1, g: 1, b: 1, a: 1}
+  _hoverColor: {r: 0, g: 0, b: 1, a: 1}
 --- !u!1 &318433925
 GameObject:
   m_ObjectHideFlags: 0
@@ -1245,6 +1261,7 @@ GameObject:
   - component: {fileID: 657749812}
   - component: {fileID: 657749811}
   - component: {fileID: 657749810}
+  - component: {fileID: 657749813}
   m_Layer: 5
   m_Name: Settings
   m_TagString: Untagged
@@ -1366,6 +1383,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 657749808}
   m_CullTransparentMesh: 1
+--- !u!114 &657749813
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 657749808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a950c771fb88824a8b33f72e0d795c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _buttonText: {fileID: 1181664955}
+  _normalColor: {r: 1, g: 1, b: 1, a: 1}
+  _hoverColor: {r: 0, g: 0, b: 1, a: 1}
 --- !u!1 &937917599
 GameObject:
   m_ObjectHideFlags: 0
@@ -1650,6 +1682,7 @@ GameObject:
   - component: {fileID: 1188750861}
   - component: {fileID: 1188750860}
   - component: {fileID: 1188750859}
+  - component: {fileID: 1188750862}
   m_Layer: 5
   m_Name: Quit
   m_TagString: Untagged
@@ -1771,6 +1804,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1188750857}
   m_CullTransparentMesh: 1
+--- !u!114 &1188750862
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1188750857}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a950c771fb88824a8b33f72e0d795c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _buttonText: {fileID: 2114663230}
+  _normalColor: {r: 1, g: 1, b: 1, a: 1}
+  _hoverColor: {r: 0, g: 0, b: 1, a: 1}
 --- !u!1 &1335780644
 GameObject:
   m_ObjectHideFlags: 0
