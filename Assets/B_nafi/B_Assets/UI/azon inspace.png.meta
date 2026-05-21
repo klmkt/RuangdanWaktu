@@ -191,7 +191,10 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      azon inspace_0: -7376182661361290264
+      azon inspace_1: -6623406943238137148
+      azon inspace_2: -2334508417954826941
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
