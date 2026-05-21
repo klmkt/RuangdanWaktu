@@ -58,6 +58,13 @@ public class AnalogClock : MonoBehaviour
 
     // Independent time tracking
     private float independentTotalTime;
+    private bool startTimeDirty;
+    private bool inspectorCacheInitialized;
+    private int lastStartingHour;
+    private int lastStartingMinute;
+    private bool lastAutoFromTime;
+    private bool lastForceLocalTime;
+    private bool lastApplyStartTimeToTimeManager;
 
     private enum HandSelection
     {
@@ -80,6 +87,7 @@ public class AnalogClock : MonoBehaviour
         CacheBodies();
         CacheOffsets();
         InitializeTime();
+        CacheInspectorValues();
     }
 
     private void InitializeTime()
@@ -89,13 +97,21 @@ public class AnalogClock : MonoBehaviour
             if (applyStartTimeToTimeManager)
             {
                 timeManager.SetTime(startingHour, startingMinute);
+                timeOffsetMinutes = 0f;
             }
 
             // Will sync with TimeManager in Update
+            startTimeDirty = false;
             return;
         }
 
         // Initialize independent time tracking
+        SetIndependentTimeFromStarting();
+        startTimeDirty = false;
+    }
+
+    private void SetIndependentTimeFromStarting()
+    {
         float totalMinutes = Mathf.Clamp(startingHour, 0, 23) * 60f + Mathf.Clamp(startingMinute, 0, 59);
         independentTotalTime = totalMinutes * dayDuration / MinutesInDay;
     }
@@ -106,6 +122,34 @@ public class AnalogClock : MonoBehaviour
         CacheBodies();
         CacheOffsets();
         ResolveClockSprite();
+
+        bool shouldMarkDirty = false;
+
+        if (inspectorCacheInitialized)
+        {
+            shouldMarkDirty = startingHour != lastStartingHour
+                || startingMinute != lastStartingMinute
+                || autoFromTime != lastAutoFromTime
+                || forceLocalTime != lastForceLocalTime
+                || applyStartTimeToTimeManager != lastApplyStartTimeToTimeManager;
+        }
+
+        CacheInspectorValues();
+
+        if (Application.isPlaying && shouldMarkDirty)
+        {
+            startTimeDirty = true;
+        }
+    }
+
+    private void CacheInspectorValues()
+    {
+        lastStartingHour = startingHour;
+        lastStartingMinute = startingMinute;
+        lastAutoFromTime = autoFromTime;
+        lastForceLocalTime = forceLocalTime;
+        lastApplyStartTimeToTimeManager = applyStartTimeToTimeManager;
+        inspectorCacheInitialized = true;
     }
 
     private void ResolveClockCenter()
@@ -127,6 +171,8 @@ public class AnalogClock : MonoBehaviour
     private void Update()
     {
         UpdateClockOpacity(IsPlayerInsideClock());
+
+        ApplyStartTimeIfDirty();
 
         if (hourHand == null || minuteHand == null)
         {
@@ -162,6 +208,41 @@ public class AnalogClock : MonoBehaviour
         AdvanceIndependentTimeIfNeeded();
         GetIndependentTime(out hourValue, out minuteValue);
         UpdateAngles(hourValue, minuteValue);
+    }
+
+    private void ApplyStartTimeIfDirty()
+    {
+        if (!startTimeDirty)
+        {
+            return;
+        }
+
+        if (autoFromTime && !forceLocalTime)
+        {
+            if (!applyStartTimeToTimeManager)
+            {
+                startTimeDirty = false;
+                return;
+            }
+
+            if (timeManager == null)
+            {
+                timeManager = FindFirstObjectByType<TimeManager>();
+            }
+
+            if (timeManager == null)
+            {
+                return;
+            }
+
+            timeManager.SetTime(startingHour, startingMinute);
+            timeOffsetMinutes = 0f;
+            startTimeDirty = false;
+            return;
+        }
+
+        SetIndependentTimeFromStarting();
+        startTimeDirty = false;
     }
 
     private void FixedUpdate()

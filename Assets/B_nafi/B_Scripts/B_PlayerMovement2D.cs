@@ -86,14 +86,14 @@ public class PlayerMovement_nafi : MonoBehaviour
             // flip by flip SpriteRenderer
             // GetComponent<SpriteRenderer>().flipX = false;
             sr.flipX = false;
-            
+
         }
         else if (moveInput < 0)
         {
             // flip by flip SpriteRenderer
             // GetComponent<SpriteRenderer>().flipX = true;
-            sr.flipX = true; 
-            
+            sr.flipX = true;
+
         }
     }
 
